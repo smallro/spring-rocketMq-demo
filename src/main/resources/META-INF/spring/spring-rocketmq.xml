@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+						   http://www.springframework.org/schema/beans/spring-beans.xsd"
+	   default-lazy-init="true">
+
+	<bean id="rocketMqProducer" class="cn.wang.rocketmq.producer.RocketMqProducer" init-method="init"
+		  destroy-method="destroy" scope="singleton">
+		<property name="host" value="${mq.host}" />
+		<property name="producerGroup" value="myProducer" />
+	</bean>
+
+<!--	<bean id="rocketMqConsumer" class="cn.wang.rocketmq.consumer.RocketMqConsumer" init-method="init"
+		  destroy-method="destroy" scope="singleton">
+		<property name="host" value="${mq.host}" />
+		<property name="consumerGroup" value="myConsumer" />
+	</bean>-->
+	<bean id="messageListeners" class="cn.wang.rocketmq.listener.MessageListener" />
+	<bean id="rocketMqConsumer" class="cn.wang.rocketmq.consumer.RocketMqConsumer" destroy-method="shutdown">
+		<!--一个应用创建一个Consumer，由应用来维护此对象，可以设置为全局对象或者单例
+		注意：ConsumerGroupName需要由应用来保证唯一 -->
+		<property name="consumerGroup" value="myConsumer"/>
+		<property name="namesrvAddr" value="${mq.host}"/>
+		<!--设置Consumer第一次启动是从队列头部开始消费还是队列尾部开始消费
+		如果非第一次启动，那么按照上次消费的位置继续消费-->
+		<property name="consumeFromWhere" value="CONSUME_FROM_FIRST_OFFSET"/>
+		<property name="messageModel" value="CLUSTERING"/>
+		<property name="subscription">
+			<map>
+				<entry key="MyTopic">
+					<value>MyTag</value>
+				</entry>
+			</map>
+		</property>
+		<property name="messageListener" ref="messageListeners"/>
+	</bean>
+</beans>
